@@ -1,0 +1,6 @@
+{
+  "name": "Luma Atelier — Luxury Salon & Online Booking System",
+  "description": "A high-end salon website, real-time appointment booking engine, and salon management administration system for luxury salons and beauty studios.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
