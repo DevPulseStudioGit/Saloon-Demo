@@ -1,13 +1,18 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createApp } from '../server/app';
-import { ensureSeeded } from '../server/database/seed';
 
-const app = createApp();
+let app: ReturnType<typeof import('../server/app')['createApp']> | undefined;
 let initialization: Promise<void> | undefined;
 
-function initialize(): Promise<void> {
+async function initialize(): Promise<void> {
   if (!initialization) {
-    initialization = ensureSeeded().catch((error) => {
+    initialization = (async () => {
+      const [{ createApp }, { ensureSeeded }] = await Promise.all([
+        import('../server/app'),
+        import('../server/database/seed')
+      ]);
+      app = createApp();
+      await ensureSeeded();
+    })().catch((error) => {
       initialization = undefined;
       throw error;
     });
@@ -16,11 +21,14 @@ function initialize(): Promise<void> {
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
+  const path = req.url?.split('?')[0] || '';
+  if (path.endsWith('/api/health')) {
+    return res.status(200).json({ ok: true });
+  }
+
   try {
-    const path = req.url?.split('?')[0] || '';
-    if (!path.endsWith('/api/health') && !path.startsWith('/api/auth/')) {
-      await initialize();
-    }
+    await initialize();
+    if (!app) throw new Error('API application was not initialized');
     return app(req, res);
   } catch (error) {
     console.error('Unable to initialize API', error);
