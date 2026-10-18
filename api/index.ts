@@ -1,18 +1,13 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createApp } from '../server/app';
+import { ensureSeeded } from '../server/database/seed';
 
-let app: ReturnType<typeof import('../server/app')['createApp']> | undefined;
+const app = createApp();
 let initialization: Promise<void> | undefined;
 
-async function initialize(): Promise<void> {
+function initialize(): Promise<void> {
   if (!initialization) {
-    initialization = (async () => {
-      const [{ createApp }, { ensureSeeded }] = await Promise.all([
-        import('../server/app'),
-        import('../server/database/seed')
-      ]);
-      app = createApp();
-      await ensureSeeded();
-    })().catch((error) => {
+    initialization = ensureSeeded().catch((error) => {
       initialization = undefined;
       throw error;
     });
@@ -28,7 +23,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
 
   try {
     await initialize();
-    if (!app) throw new Error('API application was not initialized');
     return app(req, res);
   } catch (error) {
     console.error('Unable to initialize API', error);
