@@ -22,7 +22,9 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   }
 
   try {
-    await initialize();
+    if (!path.startsWith('/api/auth/')) {
+      await initialize();
+    }
     return app(req, res);
   } catch (error) {
     console.error('Unable to initialize API', error);
