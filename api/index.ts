@@ -17,7 +17,10 @@ function initialize(): Promise<void> {
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
-    await initialize();
+    const path = req.url?.split('?')[0] || '';
+    if (!path.endsWith('/api/health') && !path.startsWith('/api/auth/')) {
+      await initialize();
+    }
     return app(req, res);
   } catch (error) {
     console.error('Unable to initialize API', error);
