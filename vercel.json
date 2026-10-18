@@ -5,18 +5,6 @@
       "dest": "/api/health.ts"
     },
     {
-      "src": "/api/auth/login",
-      "dest": "/api/auth/login.ts"
-    },
-    {
-      "src": "/api/auth/session",
-      "dest": "/api/auth/session.ts"
-    },
-    {
-      "src": "/api/auth/logout",
-      "dest": "/api/auth/logout.ts"
-    },
-    {
       "src": "/api/(.*)",
       "dest": "/api/index.ts"
     }
