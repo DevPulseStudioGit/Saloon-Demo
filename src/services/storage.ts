@@ -88,7 +88,10 @@ async function persist<K extends keyof DataMap>(collection: K, value: DataMap[K]
 }
 
 const hydrateFromServer = async () => {
-  const response = await fetch('/api/bootstrap', { credentials: 'include' });
+  const response = await fetch('/api/bootstrap', {
+    credentials: 'include',
+    cache: 'no-store'
+  });
   if (!response.ok) {
     const body = await response.json().catch(() => null) as { error?: string } | null;
     throw new Error(body?.error || `API returned ${response.status}`);

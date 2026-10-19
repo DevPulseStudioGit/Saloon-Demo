@@ -26,6 +26,7 @@ async function getDatabase() {
 }
 
 export default async function handler(_req: VercelRequest, res: VercelResponse) {
+  res.setHeader('Cache-Control', 'no-store, max-age=0');
   try {
     const database = await getDatabase();
     const result: Record<string, unknown> = {};

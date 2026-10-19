@@ -13,6 +13,7 @@ export const AdminCustomers: React.FC = () => {
   useEffect(() => {
     const refreshCustomers = () => setCustomers(StorageService.getCustomers());
     window.addEventListener('luma_data_updated', refreshCustomers);
+    void StorageService.refreshFromServer();
     return () => window.removeEventListener('luma_data_updated', refreshCustomers);
   }, []);
 
