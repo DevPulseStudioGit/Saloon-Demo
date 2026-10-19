@@ -1,5 +1,7 @@
 import { createHmac } from 'node:crypto';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { createApp } from '../server/app';
+import { ensureSeeded } from '../server/database/seed';
 
 type AdminUser = {
   id: string;
@@ -91,10 +93,6 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (path.endsWith('/api/health')) return res.status(200).json({ ok: true });
 
   try {
-    const [{ createApp }, { ensureSeeded }] = await Promise.all([
-      import('../server/app'),
-      import('../server/database/seed')
-    ]);
     await ensureSeeded();
     if (requestedPath) req.url = requestedPath;
     return createApp()(req, res);
