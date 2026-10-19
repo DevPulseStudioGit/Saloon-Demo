@@ -96,6 +96,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       import('../server/database/seed')
     ]);
     await ensureSeeded();
+    if (requestedPath) req.url = requestedPath;
     return createApp()(req, res);
   } catch (error) {
     console.error('Unable to initialize API', error);
