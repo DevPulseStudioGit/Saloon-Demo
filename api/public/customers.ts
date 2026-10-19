@@ -31,7 +31,15 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
       if (typeof customer.id !== 'string' || !customer.phone) {
         return res.status(400).json({ error: 'Each customer requires an id and phone' });
       }
-      await collection.replaceOne({ _id: customer.id }, { ...customer, _id: customer.id }, { upsert: true });
+      const existing = await collection.findOne({
+        $or: [{ _id: customer.id }, { phone: customer.phone }]
+      });
+      const customerId = existing?._id || customer.id;
+      await collection.replaceOne(
+        { _id: customerId },
+        { ...existing, ...customer, _id: customerId },
+        { upsert: true }
+      );
     }
     return res.status(200).json({ ok: true });
   } catch (error) {
