@@ -69,6 +69,10 @@ async function persist<K extends keyof DataMap>(collection: K, value: DataMap[K]
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(value)
     });
+    const readError = async (response: Response) => {
+      const body = await response.json().catch(() => null) as { error?: string } | null;
+      return body?.error || `API returned ${response.status}`;
+    };
     let response = await request(endpoint);
     if (
       response.status === 401 &&
@@ -76,7 +80,7 @@ async function persist<K extends keyof DataMap>(collection: K, value: DataMap[K]
     ) {
       response = await request(`/api/public/${collection}`);
     }
-    if (!response.ok) throw new Error(`API returned ${response.status}`);
+    if (!response.ok) throw new Error(await readError(response));
   } catch (error) {
     console.error(`Failed to persist ${collection} to MongoDB`, error);
     throw error;
@@ -85,7 +89,10 @@ async function persist<K extends keyof DataMap>(collection: K, value: DataMap[K]
 
 const hydrateFromServer = async () => {
   const response = await fetch('/api/bootstrap', { credentials: 'include' });
-  if (!response.ok) throw new Error(`API returned ${response.status}`);
+  if (!response.ok) {
+    const body = await response.json().catch(() => null) as { error?: string } | null;
+    throw new Error(body?.error || `API returned ${response.status}`);
+  }
   const data = await response.json() as Partial<DataMap>;
     (Object.keys(defaults) as Array<keyof DataMap>).forEach((key) => {
       if (data[key] !== undefined) Object.assign(cache, { [key]: data[key] });

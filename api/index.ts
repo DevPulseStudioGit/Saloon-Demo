@@ -100,6 +100,7 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
     return createApp()(req, res);
   } catch (error) {
     console.error('Unable to initialize API', error);
-    return res.status(503).json({ error: 'The API is temporarily unavailable.' });
+    const message = error instanceof Error ? error.message : 'Unknown API initialization error';
+    return res.status(503).json({ error: `The API is temporarily unavailable: ${message}` });
   }
 }
