@@ -28,16 +28,24 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   try {
     const collection = await getCollection();
     for (const customer of req.body as Array<Record<string, unknown>>) {
-      if (typeof customer.id !== 'string' || !customer.phone) {
-        return res.status(400).json({ error: 'Each customer requires an id and phone' });
+      if (!customer.phone || typeof customer.phone !== 'string') {
+        return res.status(400).json({ error: 'Each customer requires a phone' });
       }
+      const normalizedPhone = customer.phone.replace(/\s+/g, '');
       const existing = await collection.findOne({
-        $or: [{ _id: customer.id }, { phone: customer.phone }]
+        $or: [
+          ...(typeof customer.id === 'string' ? [{ _id: customer.id }] : []),
+          { phone: customer.phone },
+          { phone: normalizedPhone }
+        ]
       });
       const customerId = existing?._id || customer.id;
+      const stableCustomerId = typeof customerId === 'string'
+        ? customerId
+        : `cust-${normalizedPhone.replace(/\D/g, '')}`;
       await collection.replaceOne(
-        { _id: customerId },
-        { ...existing, ...customer, _id: customerId },
+        { _id: stableCustomerId },
+        { ...existing, ...customer, id: stableCustomerId, _id: stableCustomerId },
         { upsert: true }
       );
     }
