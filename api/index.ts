@@ -8,15 +8,28 @@ const collectionNames = [
 ] as const;
 
 let mongoClient: MongoClient | undefined;
+let databasePromise: Promise<ReturnType<MongoClient['db']>> | undefined;
 
 async function getDatabase() {
   const mongoUri = process.env.MONGODB_URI;
   if (!mongoUri) throw new Error('MONGODB_URI is not configured');
   if (!mongoClient) {
     mongoClient = new MongoClient(mongoUri);
-    await mongoClient.connect();
+    databasePromise = undefined;
   }
-  return mongoClient.db(process.env.MONGODB_DB_NAME || process.env.MONGODB_DB || 'luma_salon');
+  if (!databasePromise) {
+    databasePromise = mongoClient.connect().then(() => (
+      mongoClient!.db(process.env.MONGODB_DB_NAME || process.env.MONGODB_DB || 'luma_salon')
+    ));
+  }
+  try {
+    return await databasePromise;
+  } catch (error) {
+    await mongoClient.close().catch(() => undefined);
+    mongoClient = undefined;
+    databasePromise = undefined;
+    throw error;
+  }
 }
 
 async function readBootstrap(res: VercelResponse) {
