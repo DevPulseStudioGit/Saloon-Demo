@@ -82,18 +82,17 @@ async function persist<K extends keyof DataMap>(collection: K, value: DataMap[K]
   }
 }
 
-void fetch('/api/bootstrap')
-  .then((response) => {
-    if (!response.ok) throw new Error(`API returned ${response.status}`);
-    return response.json() as Promise<Partial<DataMap>>;
-  })
-  .then((data) => {
+const hydrateFromServer = async () => {
+  const response = await fetch('/api/bootstrap', { credentials: 'include' });
+  if (!response.ok) throw new Error(`API returned ${response.status}`);
+  const data = await response.json() as Partial<DataMap>;
     (Object.keys(defaults) as Array<keyof DataMap>).forEach((key) => {
       if (data[key] !== undefined) Object.assign(cache, { [key]: data[key] });
     });
     notify();
-  })
-  .catch((error) => console.error('Failed to hydrate salon data from MongoDB', error));
+};
+
+void hydrateFromServer().catch((error) => console.error('Failed to hydrate salon data from MongoDB', error));
 
 function save<K extends keyof DataMap>(collection: K, value: DataMap[K]) {
   Object.assign(cache, { [collection]: value });
@@ -127,6 +126,13 @@ export const StorageService = {
   getFaqs: () => cache.faqs,
   saveFaqs: (value: FaqItem[]) => save('faqs', value),
   getAuditLogs: () => cache.auditLogs,
+  refreshFromServer: async () => {
+    try {
+      await hydrateFromServer();
+    } catch (error) {
+      console.error('Failed to refresh salon data from MongoDB', error);
+    }
+  },
   addAuditLog: (user: string, role: string, action: string, details: string) => {
     const log: AuditLogItem = {
       id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   LayoutDashboard,
   Calendar,
@@ -16,7 +16,8 @@ import {
   Shield,
   UserCheck,
   ExternalLink,
-  RotateCcw
+  RotateCcw,
+  Bell
 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { useSalon } from '../../context/SalonContext';
@@ -35,11 +36,26 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
   children
 }) => {
   const { currentUser, switchDemoRole, logout } = useAdminAuth();
-  const { settings, resetAllData } = useSalon();
+  const { settings, appointments, resetAllData } = useSalon();
   const [resetConfirm, setResetConfirm] = useState(false);
+  const [newBookingNotice, setNewBookingNotice] = useState<string | null>(null);
+  const knownAppointmentIds = useRef<Set<string> | null>(null);
 
   const role = currentUser?.role || 'owner';
   const isStylist = role === 'stylist';
+
+  useEffect(() => {
+    const appointmentIds = new Set(appointments.map((appointment) => appointment.id));
+    if (knownAppointmentIds.current) {
+      const newAppointment = appointments.find(
+        (appointment) => !knownAppointmentIds.current?.has(appointment.id)
+      );
+      if (newAppointment) {
+        setNewBookingNotice(`New booking received: ${newAppointment.reference}`);
+      }
+    }
+    knownAppointmentIds.current = appointmentIds;
+  }, [appointments]);
 
   // Navigation items based on role
   const navItems = isStylist
@@ -156,6 +172,20 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
       <main className="flex-1 flex flex-col min-w-0 overflow-y-auto">
         {/* Top Control Bar with Role Switcher & Karachi Time */}
         <header className="bg-white border-b border-[#E7E0D8] px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-20 shadow-2xs">
+          {newBookingNotice && (
+            <div className="fixed right-6 top-20 z-50 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-900 shadow-lg">
+              <Bell className="h-4 w-4 text-emerald-700" />
+              <span className="font-semibold">{newBookingNotice}</span>
+              <button
+                type="button"
+                onClick={() => setNewBookingNotice(null)}
+                className="text-emerald-700 hover:text-emerald-950"
+                aria-label="Dismiss new booking notification"
+              >
+                ×
+              </button>
+            </div>
+          )}
           {/* Quick Demo Persona Switcher */}
           <div className="flex flex-wrap items-center gap-2 text-xs">
             <span className="text-[#77716C] font-medium hidden sm:inline">Active Persona:</span>

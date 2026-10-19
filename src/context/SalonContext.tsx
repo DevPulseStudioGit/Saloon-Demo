@@ -151,6 +151,17 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     return () => window.removeEventListener('luma_data_updated', handleStorageUpdate);
   }, []);
 
+  useEffect(() => {
+    if (!currentUser) return;
+
+    void StorageService.refreshFromServer();
+    const refreshInterval = window.setInterval(() => {
+      void StorageService.refreshFromServer();
+    }, 5000);
+
+    return () => window.clearInterval(refreshInterval);
+  }, [currentUser]);
+
   const updateBookingDraft = (partial: Partial<BookingDraft>) => {
     setBookingDraft((prev) => ({ ...prev, ...partial }));
   };
