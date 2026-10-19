@@ -17,12 +17,23 @@ export const AdminCustomers: React.FC = () => {
     return () => window.removeEventListener('luma_data_updated', refreshCustomers);
   }, []);
 
-  const filtered = customers.filter(
-    (c) =>
-      c.name.toLowerCase().includes(search.toLowerCase()) ||
-      c.phone.includes(search) ||
-      (c.email && c.email.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filtered = customers
+    .filter(
+      (c) =>
+        c.name.toLowerCase().includes(search.toLowerCase()) ||
+        c.phone.includes(search) ||
+        (c.email && c.email.toLowerCase().includes(search.toLowerCase()))
+    )
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+
+  const isNewCustomer = (customer: CustomerRecord) =>
+    Date.now() - Date.parse(customer.createdAt) < 7 * 24 * 60 * 60 * 1000;
+
+  const visitBadgeClass = (visits: number) => {
+    if (visits >= 4) return 'bg-[#E9D5FF] text-[#6B21A8]';
+    if (visits >= 2) return 'bg-[#FEF3C7] text-[#92400E]';
+    return 'bg-[#DBEAFE] text-[#1D4ED8]';
+  };
 
   const openEdit = (c: CustomerRecord) => {
     setEditingCust(c);
@@ -83,9 +94,23 @@ export const AdminCustomers: React.FC = () => {
           </thead>
           <tbody className="divide-y divide-[#FAF8F4]">
             {filtered.map((c) => (
-              <tr key={c.id} className="hover:bg-[#FAF8F4] transition-colors">
+              <tr
+                key={c.id}
+                className={`transition-colors ${
+                  isNewCustomer(c)
+                    ? 'bg-emerald-50/70 hover:bg-emerald-100/70'
+                    : 'hover:bg-[#FAF8F4]'
+                }`}
+              >
                 <td className="py-3.5 px-4">
-                  <div className="font-semibold text-[#26231E]">{c.name}</div>
+                  <div className="flex items-center gap-2 font-semibold text-[#26231E]">
+                    {c.name}
+                    {isNewCustomer(c) && (
+                      <span className="rounded-full bg-emerald-600 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wide text-white">
+                        New
+                      </span>
+                    )}
+                  </div>
                   <div className="text-[11px] text-[#77716C]">{c.email || 'No email'}</div>
                 </td>
 
@@ -94,7 +119,7 @@ export const AdminCustomers: React.FC = () => {
                 </td>
 
                 <td className="py-3.5 px-4">
-                  <span className="font-semibold bg-[#F7F4EF] px-2 py-0.5 rounded text-[#26231E]">
+                  <span className={`font-semibold px-2 py-0.5 rounded ${visitBadgeClass(c.totalVisits)}`}>
                     {c.totalVisits} visit{c.totalVisits > 1 ? 's' : ''}
                   </span>
                 </td>
