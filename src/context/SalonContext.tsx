@@ -305,11 +305,11 @@ export const SalonProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     // Save to storage
     const currentAppts = StorageService.getAppointments();
     const updatedAppts = [newAppt, ...currentAppts];
-    StorageService.saveAppointments(updatedAppts);
+    await StorageService.saveAppointments(updatedAppts);
     setAppointments(updatedAppts);
 
     // Record customer in CRM
-    StorageService.recordCustomerAppointment(bookingDraft.customer, pricing.total);
+    await StorageService.recordCustomerAppointment(bookingDraft.customer, pricing.total);
 
     // Log audit
     StorageService.addAuditLog(

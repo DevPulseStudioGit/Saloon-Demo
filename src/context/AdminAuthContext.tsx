@@ -15,6 +15,7 @@ interface AdminAuthContextType {
 }
 
 const AUTH_STORAGE_KEY = 'luma_current_auth_session';
+const DEMO_ROLE_STORAGE_KEY = 'luma_demo_role_session';
 
 const AdminAuthContext = createContext<AdminAuthContextType | undefined>(undefined);
 
@@ -25,8 +26,12 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     void fetch('/api/auth/session', { credentials: 'include' })
       .then((response) => response.ok ? response.json() : Promise.reject(new Error('Not authenticated')))
       .then(({ user }: { user: UserSession }) => {
-        setCurrentUser(user);
-        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
+        const savedDemoUser = localStorage.getItem(DEMO_ROLE_STORAGE_KEY);
+        const effectiveUser = savedDemoUser
+          ? DEMO_USERS.find((demoUser) => demoUser.email === savedDemoUser) || user
+          : user;
+        setCurrentUser(effectiveUser);
+        localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(effectiveUser));
       })
       .catch(() => localStorage.removeItem(AUTH_STORAGE_KEY));
   }, []);
@@ -57,13 +62,9 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       if (byEmail) target = byEmail;
     }
     if (target) {
-      void fetch('/api/auth/demo', { method: 'POST', credentials: 'include' })
-        .then((response) => response.json())
-        .then(({ user }: { user: UserSession }) => {
-          setCurrentUser(user);
-          localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(user));
-        })
-        .catch((error) => console.error('Demo login request failed', error));
+      setCurrentUser(target);
+      localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(target));
+      localStorage.setItem(DEMO_ROLE_STORAGE_KEY, target.email);
     }
   };
 
@@ -72,6 +73,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       .catch((error) => console.error('Admin logout request failed', error))
       .finally(() => {
         localStorage.removeItem(AUTH_STORAGE_KEY);
+        localStorage.removeItem(DEMO_ROLE_STORAGE_KEY);
         setCurrentUser(null);
       });
   };

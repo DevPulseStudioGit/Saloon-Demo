@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Search, User, Phone, Mail, Calendar, DollarSign, Edit2, Check, X } from 'lucide-react';
 import { StorageService } from '../../services/storage';
 import { CustomerRecord } from '../../types';
@@ -9,6 +9,12 @@ export const AdminCustomers: React.FC = () => {
   const [editingCust, setEditingCust] = useState<CustomerRecord | null>(null);
   const [notesInput, setNotesInput] = useState('');
   const [allergiesInput, setAllergiesInput] = useState('');
+
+  useEffect(() => {
+    const refreshCustomers = () => setCustomers(StorageService.getCustomers());
+    window.addEventListener('luma_data_updated', refreshCustomers);
+    return () => window.removeEventListener('luma_data_updated', refreshCustomers);
+  }, []);
 
   const filtered = customers.filter(
     (c) =>

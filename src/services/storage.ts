@@ -79,6 +79,7 @@ async function persist<K extends keyof DataMap>(collection: K, value: DataMap[K]
     if (!response.ok) throw new Error(`API returned ${response.status}`);
   } catch (error) {
     console.error(`Failed to persist ${collection} to MongoDB`, error);
+    throw error;
   }
 }
 
@@ -97,7 +98,7 @@ void hydrateFromServer().catch((error) => console.error('Failed to hydrate salon
 function save<K extends keyof DataMap>(collection: K, value: DataMap[K]) {
   Object.assign(cache, { [collection]: value });
   notify();
-  void persist(collection, value);
+  return persist(collection, value);
 }
 
 export const StorageService = {
@@ -156,7 +157,7 @@ export const StorageService = {
         createdAt: new Date().toISOString()
       });
     }
-    save('customers', customers);
+    return save('customers', customers);
   },
   resetAll: () => {
     (Object.keys(defaults) as Array<keyof DataMap>).forEach((key) => save(key, defaults[key]));
