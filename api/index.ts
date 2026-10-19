@@ -83,7 +83,8 @@ function handleAuth(req: VercelRequest, res: VercelResponse, action: 'login' | '
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const path = req.url?.split('?')[0] || '';
+  const requestedPath = typeof req.query.path === 'string' ? req.query.path : '';
+  const path = requestedPath || req.url?.split('?')[0] || '';
   if (path.endsWith('/api/auth/login')) return handleAuth(req, res, 'login');
   if (path.endsWith('/api/auth/session')) return handleAuth(req, res, 'session');
   if (path.endsWith('/api/auth/logout')) return handleAuth(req, res, 'logout');

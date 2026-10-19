@@ -39,7 +39,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
-      const result = await response.json() as { user?: UserSession; error?: string };
+      const result = await response.json().catch(() => ({})) as { user?: UserSession; error?: string };
       if (!response.ok || !result.user) return { success: false, error: result.error || 'Invalid credentials.' };
       setCurrentUser(result.user);
       localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify(result.user));
