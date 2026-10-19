@@ -25,7 +25,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       return {
         id: 'usr-admin-1',
         name: 'Executive Concierge',
-        email: 'admin@dineframe.pk',
+        email: 'admin@lumaatelier.com',
         role: 'super_admin',
       };
     }
@@ -42,9 +42,9 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   }, []);
 
   const login = async (email: string, pass: string): Promise<{ success: boolean; error?: string }> => {
-    // Standard secure-like check for restaurant admin
+    // Standard secure-like check for salon admin
     const cleanEmail = email.trim().toLowerCase();
-    if (cleanEmail === 'admin@dineframe.pk' && pass === 'dineframe2026') {
+    if (cleanEmail === 'admin@lumaatelier.com' && pass === 'luma2026') {
       StorageService.setAdminLogin('admin_auth_token_' + Date.now());
       setUser({
         id: 'usr-admin-1',
@@ -60,7 +60,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       StorageService.setAdminLogin('admin_auth_token_' + Date.now());
       setUser({
         id: 'usr-admin-2',
-        name: 'Restaurant Operations Lead',
+        name: 'Salon Operations Lead',
         email: cleanEmail,
         role: 'branch_manager',
       });
@@ -69,7 +69,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
     return {
       success: false,
-      error: 'Invalid credentials. You can use admin@dineframe.pk with password dineframe2026.',
+      error: 'Invalid credentials. You can use admin@lumaatelier.com with password luma2026.',
     };
   };
 
@@ -78,7 +78,7 @@ export const AdminProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setUser({
       id: 'usr-admin-1',
       name: 'Operations Manager (Karachi)',
-      email: 'admin@dineframe.pk',
+      email: 'admin@lumaatelier.com',
       role: 'super_admin',
     });
     setIsAuthenticated(true);

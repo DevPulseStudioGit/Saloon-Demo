@@ -352,7 +352,7 @@ export const CheckoutPage: React.FC = () => {
 
             {paymentMethod === 'bank_transfer_raast' && (
               <div className="p-4 bg-[#FAF8F4] border border-[#E8E2DA] rounded-2xl text-xs space-y-1.5 text-[#25231F]">
-                <div className="font-semibold text-[#B64E35]">Official Restaurant Raast Details:</div>
+                <div className="font-semibold text-[#B64E35]">Official Salon Raast Details:</div>
                 <div>Raast ID: <strong>03008294110</strong> ({config.name})</div>
                 <div>Bank: Meezan Bank Ltd | Account: 0102-0105892341</div>
                 <div className="text-[11px] text-[#77736D]">

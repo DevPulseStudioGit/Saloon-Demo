@@ -48,10 +48,10 @@ export const AdminLogin: React.FC = () => {
             <Flame className="w-6 h-6 text-[#B64E35]" />
           </div>
           <h1 className="font-serif font-black text-2xl text-[#25231F] pt-2">
-            Restaurant Management
+            Salon Management
           </h1>
           <p className="text-xs text-[#77736D]">
-            Access live orders, menu builder, branch management, and website configuration.
+            Access appointments, service catalog, branch management, and website configuration.
           </p>
         </div>
 
@@ -73,7 +73,7 @@ export const AdminLogin: React.FC = () => {
                 required
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="admin@dineframe.pk"
+                placeholder="admin@lumaatelier.com"
                 className="w-full bg-[#FAF8F4] border border-[#E8E2DA] rounded-xl pl-10 pr-4 py-3 text-xs sm:text-sm text-[#25231F] focus:outline-none focus:border-[#B64E35]"
               />
             </div>
