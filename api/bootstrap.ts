@@ -9,8 +9,12 @@ const collections = [
 let client: MongoClient | undefined;
 
 async function getDatabase() {
-  if (!process.env.MONGODB_URI) throw new Error('MONGODB_URI is not configured');
-  if (!client) client = new MongoClient(process.env.MONGODB_URI);
+  const configuredUri = process.env.MONGODB_URI;
+  if (!configuredUri) throw new Error('MONGODB_URI is not configured');
+  const mongoUri = configuredUri.includes('<db_password>') && process.env.MONGODB_PASSWORD
+    ? configuredUri.replace('<db_password>', encodeURIComponent(process.env.MONGODB_PASSWORD))
+    : configuredUri;
+  if (!client) client = new MongoClient(mongoUri);
   try {
     await client.connect();
     return client.db(process.env.MONGODB_DB_NAME || process.env.MONGODB_DB || 'luma_salon');
