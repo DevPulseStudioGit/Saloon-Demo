@@ -142,19 +142,21 @@ function handleAuth(req: VercelRequest, res: VercelResponse, action: 'login' | '
 }
 
 export default async function handler(req: VercelRequest, res: VercelResponse) {
-  const requestedPath = typeof req.query.path === 'string' ? req.query.path : '';
-  const path = requestedPath || req.url?.split('?')[0] || '';
+  const queryPath = Array.isArray(req.query.path) ? req.query.path[0] : req.query.path;
+  const requestedPath = typeof queryPath === 'string' ? queryPath : '';
+  const rawPath = requestedPath || req.url?.split('?')[0] || '';
+  const path = decodeURIComponent(rawPath).split('?')[0].replace(/\/+$/, '');
   if (path.endsWith('/api/auth/login')) return handleAuth(req, res, 'login');
   if (path.endsWith('/api/auth/session')) return handleAuth(req, res, 'session');
   if (path.endsWith('/api/auth/logout')) return handleAuth(req, res, 'logout');
   if (path.endsWith('/api/health')) return res.status(200).json({ ok: true });
 
   try {
-    if (path.endsWith('/api/bootstrap')) return readBootstrap(res);
-    if (path.endsWith('/api/public/appointments')) {
+    if (path.includes('/api/bootstrap')) return readBootstrap(res);
+    if (path.includes('/api/public/appointments')) {
       return writePublicCollection('appointments', req, res);
     }
-    if (path.endsWith('/api/public/customers')) {
+    if (path.includes('/api/public/customers')) {
       return writePublicCollection('customers', req, res);
     }
     return res.status(404).json({ error: 'API route not found' });
