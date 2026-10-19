@@ -75,7 +75,7 @@ async function persist<K extends keyof DataMap>(collection: K, value: DataMap[K]
     };
     let response = await request(endpoint);
     if (
-      response.status === 401 &&
+      (response.status === 401 || response.status === 404) &&
       (collection === 'appointments' || collection === 'customers')
     ) {
       response = await request(`/api/public/${collection}`);
