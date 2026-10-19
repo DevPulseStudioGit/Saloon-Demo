@@ -1,7 +1,64 @@
 import { createHmac } from 'node:crypto';
+import { MongoClient } from 'mongodb';
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { createApp } from '../server/app';
-import { ensureSeeded } from '../server/database/seed';
+
+const collectionNames = [
+  'settings', 'branches', 'categories', 'services', 'staff', 'appointments',
+  'packages', 'products', 'giftCards', 'customers', 'reviews', 'faqs', 'auditLogs'
+] as const;
+
+let mongoClient: MongoClient | undefined;
+
+async function getDatabase() {
+  const mongoUri = process.env.MONGODB_URI;
+  if (!mongoUri) throw new Error('MONGODB_URI is not configured');
+  if (!mongoClient) {
+    mongoClient = new MongoClient(mongoUri);
+    await mongoClient.connect();
+  }
+  return mongoClient.db(process.env.MONGODB_DB_NAME || process.env.MONGODB_DB || 'luma_salon');
+}
+
+async function readBootstrap(res: VercelResponse) {
+  const database = await getDatabase();
+  const result: Record<string, unknown> = {};
+  for (const name of collectionNames) {
+    const documents = await database.collection(name).find().toArray();
+    result[name] = name === 'settings'
+      ? (() => {
+          const document = documents.find((item) => item._id === 'singleton');
+          if (!document) return {};
+          const { _id, ...settings } = document;
+          return settings;
+        })()
+      : documents.map(({ _id, ...document }) => document);
+  }
+  return res.status(200).json(result);
+}
+
+async function writePublicCollection(
+  collectionName: 'appointments' | 'customers',
+  req: VercelRequest,
+  res: VercelResponse
+) {
+  if (!Array.isArray(req.body)) return res.status(400).json({ error: `${collectionName} must be an array` });
+  if (req.body.length > 25) return res.status(413).json({ error: 'Too many records in one request' });
+  const collection = (await getDatabase()).collection(collectionName);
+
+  for (const record of req.body as Array<Record<string, unknown>>) {
+    const id = typeof record.id === 'string' ? record.id : '';
+    const customer = record.customer as { phone?: unknown } | undefined;
+    const phone = collectionName === 'appointments' ? customer?.phone : record.phone;
+    if (!id || !phone) return res.status(400).json({ error: 'Each record requires an id and phone' });
+    const existing = await collection.findOne({ _id: id });
+    const existingCustomer = existing?.customer as { phone?: unknown } | undefined;
+    if (collectionName === 'appointments' && existingCustomer && existingCustomer.phone !== phone) {
+      return res.status(403).json({ error: 'Appointment ownership could not be verified' });
+    }
+    await collection.replaceOne({ _id: id }, { ...record, _id: id }, { upsert: true });
+  }
+  return res.status(200).json({ ok: true });
+}
 
 type AdminUser = {
   id: string;
@@ -93,9 +150,14 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   if (path.endsWith('/api/health')) return res.status(200).json({ ok: true });
 
   try {
-    await ensureSeeded();
-    if (requestedPath) req.url = requestedPath;
-    return createApp()(req, res);
+    if (path.endsWith('/api/bootstrap')) return readBootstrap(res);
+    if (path.endsWith('/api/public/appointments')) {
+      return writePublicCollection('appointments', req, res);
+    }
+    if (path.endsWith('/api/public/customers')) {
+      return writePublicCollection('customers', req, res);
+    }
+    return res.status(404).json({ error: 'API route not found' });
   } catch (error) {
     console.error('Unable to initialize API', error);
     const message = error instanceof Error ? error.message : 'Unknown API initialization error';
