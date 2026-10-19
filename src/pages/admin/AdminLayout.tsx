@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { useAdminAuth } from '../../context/AdminAuthContext';
 import { useSalon } from '../../context/SalonContext';
+import { StorageService } from '../../services/storage';
 
 interface AdminLayoutProps {
   currentTab: string;
@@ -46,13 +47,19 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
 
   useEffect(() => {
     const appointmentIds = new Set(appointments.map((appointment) => appointment.id));
-    if (knownAppointmentIds.current) {
-      const newAppointment = appointments.find(
-        (appointment) => !knownAppointmentIds.current?.has(appointment.id)
-      );
-      if (newAppointment) {
-        setNewBookingNotice(`New booking received: ${newAppointment.reference}`);
-      }
+    if (!StorageService.isServerHydrated()) {
+      knownAppointmentIds.current = null;
+      return;
+    }
+    if (!knownAppointmentIds.current) {
+      knownAppointmentIds.current = appointmentIds;
+      return;
+    }
+    const newAppointment = appointments
+      .filter((appointment) => !knownAppointmentIds.current?.has(appointment.id))
+      .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt))[0];
+    if (newAppointment) {
+      setNewBookingNotice(`New booking received: ${newAppointment.reference}`);
     }
     knownAppointmentIds.current = appointmentIds;
   }, [appointments]);
@@ -174,7 +181,7 @@ export const AdminLayout: React.FC<AdminLayoutProps> = ({
         <header className="bg-white border-b border-[#E7E0D8] px-6 py-3.5 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-20 shadow-2xs">
           {newBookingNotice && (
             <div className="fixed right-6 top-20 z-50 flex items-center gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-900 shadow-lg">
-              <Bell className="h-4 w-4 text-emerald-700" />
+              <Bell className="h-4 w-4 animate-bounce text-emerald-700" />
               <span className="font-semibold">{newBookingNotice}</span>
               <button
                 type="button"

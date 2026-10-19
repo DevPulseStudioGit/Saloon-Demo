@@ -58,6 +58,8 @@ const cache: DataMap = {
   auditLogs: [...defaults.auditLogs]
 };
 
+let serverHydrated = false;
+
 const notify = () => window.dispatchEvent(new Event('luma_data_updated'));
 
 async function persist<K extends keyof DataMap>(collection: K, value: DataMap[K]) {
@@ -100,6 +102,7 @@ const hydrateFromServer = async () => {
     (Object.keys(defaults) as Array<keyof DataMap>).forEach((key) => {
       if (data[key] !== undefined) Object.assign(cache, { [key]: data[key] });
     });
+    serverHydrated = true;
     notify();
 };
 
@@ -144,6 +147,7 @@ export const StorageService = {
       console.error('Failed to refresh salon data from MongoDB', error);
     }
   },
+  isServerHydrated: () => serverHydrated,
   addAuditLog: (user: string, role: string, action: string, details: string) => {
     const log: AuditLogItem = {
       id: `log-${Date.now()}-${Math.floor(Math.random() * 1000)}`,

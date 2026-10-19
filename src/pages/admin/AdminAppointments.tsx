@@ -73,7 +73,7 @@ export const AdminAppointments: React.FC = () => {
     const matchesStylist = stylistFilter === 'all' || appt.stylistId === stylistFilter;
 
     return matchesSearch && matchesStatus && matchesBranch && matchesStylist;
-  });
+  }).sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
 
   const handleUpdateStatus = (
     newStatus: AppointmentStatus,
